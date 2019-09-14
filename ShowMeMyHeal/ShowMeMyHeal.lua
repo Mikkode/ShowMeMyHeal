@@ -15,15 +15,22 @@ function ShowMeMyHeal:OnLoad(self)
 end
 
 function ShowMeMyHeal_eventHandler(self, event, ...)
-    local time, token, hidding, who_serial, who_name, who_flags, who_flags2, target_serial, target_name, target_flags, target_flags2, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12 = CombatLogGetCurrentEventInfo()
+    local time, token, hidding, who_serial, who_name, who_flags, who_flags2, target_serial, target_name, target_flags, target_flags2, A1, A2, A3, heal, excess, A6, isCrit, A8, A9, A10, A11, A12 = CombatLogGetCurrentEventInfo()
     if ShowMeMyHeal.myGUID  == who_serial then
         if token == "SPELL_HEAL" or token == "SPELL_PERIODIC_HEAL" then
-            --d = who_name.."("..A2..") heal "..target_name.." for "..A4.." exces:"..A5.." crit:"..tostring(A7)
-            t = A4.." - ["..target_name.."]"
-            ShowMeMyHeal:DisplayText(t, A7)
+            heal = heal - excess
+
+            if isCrit == false then
+                t = "|cFF0FFF00+"..heal.."|r |cFFEDF404("..excess..")|r - ["..target_name.."]"
+            else
+                t = "|cFFFF0000+"..heal.."|r |cFFEDF404("..excess..")|r - ["..target_name.."]"
+            end
+
+            ShowMeMyHeal:DisplayText(t, isCrit)
         end
     end    
 end
+
 
 function ShowMeMyHeal:DisplayText(text, isCrit)
     local frame = CreateFrame("Frame", "FloatingText", UIParent)
@@ -31,19 +38,16 @@ function ShowMeMyHeal:DisplayText(text, isCrit)
     frame:SetPoint("CENTER")
     frame:SetSize(1, 1)
 
-    ---frame.texture = frame:CreateTexture(nil, "BACKGROUND")
-    --frame.texture:SetAllPoints(true)
-    --frame.texture:SetTexture(0, 0, 0, 0.0)    
-    
+    frame.text = frame:CreateFontString(nil, "ARTWORK", nil)
+    frame.text:SetPoint("CENTER")
+
     frame.text = frame:CreateFontString(nil, "ARTWORK", nil)
     frame.text:SetPoint("CENTER")
 
     if isCrit then 
         frame.text:SetFont([=[Fonts\FRIZQT__.TTF]=], 50, "OUTLINE")
-        frame.text:SetTextColor(1, 0, 0, 1.0)
     else
         frame.text:SetFont([=[Fonts\FRIZQT__.TTF]=], 30, "OUTLINE")
-        frame.text:SetTextColor(0, 1, 0, 1.0)
     end
 
     frame.text:SetText(text)
