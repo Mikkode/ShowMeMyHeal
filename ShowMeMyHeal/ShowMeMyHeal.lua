@@ -1,5 +1,7 @@
 ShowMeMyHeal = { }; 
 
+ShowMeMyHeal.texts = { };
+
 ShowMeMyHeal.myGUID = nil
 ShowMeMyHeal.myName = nil
 
@@ -11,6 +13,8 @@ function ShowMeMyHeal:OnLoad(self)
     self:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED");
     self:SetScript("OnEvent", ShowMeMyHeal_eventHandler);
 
+    ticker = C_Timer.NewTicker(0.2, ShowMeMyHeal_Upload)
+
     print("ShowMeMyHeal chargé."); 
 end
 
@@ -19,18 +23,28 @@ function ShowMeMyHeal_eventHandler(self, event, ...)
     if ShowMeMyHeal.myGUID  == who_serial then
         if token == "SPELL_HEAL" or token == "SPELL_PERIODIC_HEAL" then
             heal = heal - excess
+            
+            local t = {}
+            
+            t.isCrit = isCrit
 
-            if isCrit == false then
-                t = "|cFF0FFF00+"..heal.."|r |cFFEDF404("..excess..")|r - ["..target_name.."]"
+            if t.isCrit == false then
+                t.text = "|cFF0FFF00+"..heal.."|r |cFFEDF404("..excess..")|r - ["..target_name.."]"
             else
-                t = "|cFFFF0000+"..heal.."|r |cFFEDF404("..excess..")|r - ["..target_name.."]"
+                t.text = "|cFFFF0000+"..heal.."|r |cFFEDF404("..excess..")|r - ["..target_name.."]"
             end
 
-            ShowMeMyHeal:DisplayText(t, isCrit)
+            table.insert(ShowMeMyHeal.texts, t)
         end
     end    
 end
 
+function ShowMeMyHeal_Upload()
+    if ShowMeMyHeal.texts[1] ~= nil then
+        ShowMeMyHeal:DisplayText(ShowMeMyHeal.texts[1].text, ShowMeMyHeal.texts[1].isCrit)
+        table.remove(ShowMeMyHeal.texts, 1)
+    end
+end
 
 function ShowMeMyHeal:DisplayText(text, isCrit)
     local frame = CreateFrame("Frame", "FloatingText", UIParent)
@@ -54,11 +68,12 @@ function ShowMeMyHeal:DisplayText(text, isCrit)
 
     local ag = frame:CreateAnimationGroup()    
     local a1 = ag:CreateAnimation("Translation")
-    a1:SetOffset(0, 400)    
+    a1:SetOffset(0, 480)    
     a1:SetDuration(4)
     a1:SetSmoothing("OUT")
     ag:SetScript("OnFinished", function() frame:Hide() end)
 
     ag:Play()
+    
 end
 
