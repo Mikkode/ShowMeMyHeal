@@ -1,8 +1,8 @@
 ## Interface: 11302
 
-## Title: ShowMeMyHeal v0.2.1
+## Title: ShowMeMyHeal v0.3.0
 ## Author: Saveme
-## Version: 0.2.1
+## Version: 0.3.0
 
 ## SavedVariables: ShowMeMyHealParameters
 
