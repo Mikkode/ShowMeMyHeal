@@ -4,5 +4,7 @@
 ## Author: Saveme
 ## Version: 0.2.1
 
+## SavedVariables: ShowMeMyHealParameters
+
 ShowMeMyHeal.lua
 ShowMeMyHeal.xml
