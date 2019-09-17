@@ -53,8 +53,6 @@ function ShowMeMyHeal_eventAddonLoad(self, event, arg1)
 end
 
 function ShowMeMyHeal_eventHandler(self, event, arg1)
-
-
     if event == "COMBAT_LOG_EVENT_UNFILTERED" then
         local time, token, hidding, who_serial, who_name, who_flags, who_flags2, target_serial, target_name, target_flags, target_flags2, A1, A2, A3, heal, excess, A6, isCrit, A8, A9, A10, A11, A12 = CombatLogGetCurrentEventInfo()
         if ShowMeMyHeal.myGUID  == who_serial then
