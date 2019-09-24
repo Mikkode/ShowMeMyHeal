@@ -1,10 +1,10 @@
 ## Interface: 11302
 
-## Title: ShowMeMyHeal v0.3.0
+## Title: ShowMeMyHeal v0.4.0
 ## Author: Saveme
-## Version: 0.3.0
+## Version: 0.4.0
 
 ## SavedVariables: ShowMeMyHealParameters
 
-ShowMeMyHeal.lua
 ShowMeMyHeal.xml
+ShowMeMyHeal.lua
