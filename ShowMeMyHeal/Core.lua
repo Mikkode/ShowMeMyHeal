@@ -1,11 +1,11 @@
-local ShowMeMyHeal = {}
-
 local AceGUI = LibStub("AceGUI-3.0")
-local ShowMeMyHeal = LibStub("AceAddon-3.0"):NewAddon("ShowMeMyHeal", "AceConsole-3.0", "AceEvent-3.0")
+ShowMeMyHeal = LibStub("AceAddon-3.0"):NewAddon("ShowMeMyHeal", "AceConsole-3.0", "AceEvent-3.0")
 
-ShowMeMyHealParameters = {
-
-    display = {
+local defaults = {
+    profile = {
+        minimap = { 
+            hide = true, 
+        }, 
         fontSizeNormalHeal = 30,
         fontSizeCriticalHeal = 41,
         animationDuration = 4,
@@ -19,24 +19,11 @@ ShowMeMyHealParameters = {
         colorCrit = "FF0000",
         colorNormal = "0FFF00",
         colorExcess = "EDF404",
-        colorName = "FFFFFF"
+        colorName = "FFFFFF",
     },
-    profile = { 
-        minimap = { 
-            hide = false, 
-        }, 
-    }, 
 }
 
-function ShowMeMyHealSlashFunction(arg)
-    if arg == "show" then
-        ShowMeMyHeal.SettingsUI:Show()
-    elseif arg == "hide" then
-        ShowMeMyHeal.SettingsUI:Hide()
-    end
-end
-
-ShowMeMyHealParametersIconDB = LibStub("LibDataBroker-1.1"):NewDataObject("ShowMeMyHealIcon", {
+ShowMeMyHealIconDB = LibStub("LibDataBroker-1.1"):NewDataObject("ShowMeMyHealIcon", {
     type = "data source",
     text = "ShowMeMyHeal!",
     icon = "Interface\\Icons\\Spell_Holy_Heal",
@@ -53,15 +40,26 @@ ShowMeMyHealParametersIconDB = LibStub("LibDataBroker-1.1"):NewDataObject("ShowM
 	end
 })
 
-function ShowMeMyHeal:OnInitialize()
+function ShowMeMyHealSlashFunction(arg)
+    if arg == "show" then
+        ShowMeMyHeal.SettingsUI:Show()
+    elseif arg == "hide" then
+        ShowMeMyHeal.SettingsUI:Hide()
+    end
+end
 
-    self.db = LibStub("AceDB-3.0"):New("ShowMeMyHealParameters", { profile = { minimap = { hide = false, }, }, })
-    local icon = LibStub("LibDBIcon-1.0")
-    icon:Register("ShowMeMyHealIcon", ShowMeMyHealParametersIconDB, self.db.profile.minimap)
+function ShowMeMyHeal_Upload()
+    if ShowMeMyHeal.texts[1] ~= nil then
+        ShowMeMyHeal:DisplayText(ShowMeMyHeal.texts[1].text, ShowMeMyHeal.texts[1].isCrit)
+        table.remove(ShowMeMyHeal.texts, 1)
+    end
+end
+
+function ShowMeMyHeal:OnInitialize()
+    self.db = LibStub("AceDB-3.0"):New("ShowMeMyHealDB", defaults, true)
 end
 
 function ShowMeMyHeal:OnEnable()
-
     ShowMeMyHeal.texts = { };
     ShowMeMyHeal.myName = UnitName("player")
     ShowMeMyHeal.myGUID = UnitGUID("player")
@@ -69,11 +67,12 @@ function ShowMeMyHeal:OnEnable()
     ShowMeMyHeal:CreateUI()
     ShowMeMyHeal:BinUI()
 
-    ShowMeMyHeal:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED", ShowMeMyHeal_eventHandler);    
+    self:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")   
 
-    ShowMeMyHeal:RegisterChatCommand("smmh", ShowMeMyHealSlashFunction, true)
+    self:RegisterChatCommand("smmh", ShowMeMyHealSlashFunction, true)
 
     ticker = C_Timer.NewTicker(0.2, ShowMeMyHeal_Upload)
+
 
     ShowMeMyHeal:Print("is enabled.") 
 
@@ -92,6 +91,15 @@ function ShowMeMyHeal:RGBPercToHex(r, g, b)
 end
 
 function ShowMeMyHeal:CreateUI()
+
+    local function CreateMinimapMenu(container)
+
+        ShowMeMyHeal.SettingsUI.checkboxMinimap  = AceGUI:Create("CheckBox")
+        ShowMeMyHeal.SettingsUI.checkboxMinimap:SetType("checkbox")
+        ShowMeMyHeal.SettingsUI.checkboxMinimap:SetLabel("Hide minimap button")
+        ShowMeMyHeal.SettingsUI.checkboxMinimap:SetValue(self.db.profile.minimap.hide)   
+        container:AddChild(ShowMeMyHeal.SettingsUI.checkboxMinimap) 
+    end
 
     local function CreateButtonMenu(container)
 
@@ -120,28 +128,28 @@ function ShowMeMyHeal:CreateUI()
         header:SetHeight(40)
         container:AddChild(header)
 
-        local r, g, b = ShowMeMyHeal:HexToRGBPerc(ShowMeMyHealParameters.display.colorNormal)
+        local r, g, b = ShowMeMyHeal:HexToRGBPerc(self.db.profile.colorNormal)
         ShowMeMyHeal.SettingsUI.ColorPickerNormalHeal = AceGUI:Create("ColorPicker")
         ShowMeMyHeal.SettingsUI.ColorPickerNormalHeal:SetLabel("Normal heal")
         ShowMeMyHeal.SettingsUI.ColorPickerNormalHeal:SetWidth(100)
         ShowMeMyHeal.SettingsUI.ColorPickerNormalHeal:SetColor(r, g, b, 1)
         container:AddChild(ShowMeMyHeal.SettingsUI.ColorPickerNormalHeal)
 
-        r, g, b = ShowMeMyHeal:HexToRGBPerc(ShowMeMyHealParameters.display.colorCrit)
+        r, g, b = ShowMeMyHeal:HexToRGBPerc(self.db.profile.colorCrit)
         ShowMeMyHeal.SettingsUI.ColorPickerCritHeal = AceGUI:Create("ColorPicker")
         ShowMeMyHeal.SettingsUI.ColorPickerCritHeal:SetLabel("Critical heal")
         ShowMeMyHeal.SettingsUI.ColorPickerCritHeal:SetWidth(100)
         ShowMeMyHeal.SettingsUI.ColorPickerCritHeal:SetColor(r, g, b, 1)
         container:AddChild(ShowMeMyHeal.SettingsUI.ColorPickerCritHeal)
 
-        r, g, b = ShowMeMyHeal:HexToRGBPerc(ShowMeMyHealParameters.display.colorExcess)
+        r, g, b = ShowMeMyHeal:HexToRGBPerc(self.db.profile.colorExcess)
         ShowMeMyHeal.SettingsUI.ColorPickerExcessHeal = AceGUI:Create("ColorPicker")
         ShowMeMyHeal.SettingsUI.ColorPickerExcessHeal:SetLabel("Excess")
         ShowMeMyHeal.SettingsUI.ColorPickerExcessHeal:SetWidth(80)
         ShowMeMyHeal.SettingsUI.ColorPickerExcessHeal:SetColor(r, g, b, 1)
         container:AddChild(ShowMeMyHeal.SettingsUI.ColorPickerExcessHeal)
 
-        r, g, b = ShowMeMyHeal:HexToRGBPerc(ShowMeMyHealParameters.display.colorName)
+        r, g, b = ShowMeMyHeal:HexToRGBPerc(self.db.profile.colorName)
         ShowMeMyHeal.SettingsUI.ColorPickerName = AceGUI:Create("ColorPicker")
         ShowMeMyHeal.SettingsUI.ColorPickerName:SetLabel("Name")
         ShowMeMyHeal.SettingsUI.ColorPickerName:SetWidth(80)
@@ -161,14 +169,14 @@ function ShowMeMyHeal:CreateUI()
         ShowMeMyHeal.SettingsUI.SliderNormalHeal:SetLabel("Font size normal heal")
         ShowMeMyHeal.SettingsUI.SliderNormalHeal:SetWidth(182)
         ShowMeMyHeal.SettingsUI.SliderNormalHeal:SetSliderValues(10, 100, 1)
-        ShowMeMyHeal.SettingsUI.SliderNormalHeal:SetValue(ShowMeMyHealParameters.display.fontSizeNormalHeal)
+        ShowMeMyHeal.SettingsUI.SliderNormalHeal:SetValue(self.db.profile.fontSizeNormalHeal)
         container:AddChild(ShowMeMyHeal.SettingsUI.SliderNormalHeal)
 
         ShowMeMyHeal.SettingsUI.SliderCritHeal = AceGUI:Create("Slider")
         ShowMeMyHeal.SettingsUI.SliderCritHeal :SetLabel("Font size critical heal")
         ShowMeMyHeal.SettingsUI.SliderCritHeal :SetWidth(182)
         ShowMeMyHeal.SettingsUI.SliderCritHeal :SetSliderValues(10, 100, 1)
-        ShowMeMyHeal.SettingsUI.SliderCritHeal:SetValue(ShowMeMyHealParameters.display.fontSizeCriticalHeal)
+        ShowMeMyHeal.SettingsUI.SliderCritHeal:SetValue(self.db.profile.fontSizeCriticalHeal)
         container:AddChild(ShowMeMyHeal.SettingsUI.SliderCritHeal)
     end
 
@@ -183,20 +191,20 @@ function ShowMeMyHeal:CreateUI()
         ShowMeMyHeal.SettingsUI.CheckboxHOTs  = AceGUI:Create("CheckBox")
         ShowMeMyHeal.SettingsUI.CheckboxHOTs:SetType("checkbox")
         ShowMeMyHeal.SettingsUI.CheckboxHOTs:SetLabel("HOTs")
-        ShowMeMyHeal.SettingsUI.CheckboxHOTs:SetValue(ShowMeMyHealParameters.display.showHOTs)   
+        ShowMeMyHeal.SettingsUI.CheckboxHOTs:SetValue(self.db.profile.showHOTs)   
         container:AddChild(ShowMeMyHeal.SettingsUI.CheckboxHOTs)     
 
 
         ShowMeMyHeal.SettingsUI.CheckboxTargetHealName = AceGUI:Create("CheckBox")
         ShowMeMyHeal.SettingsUI.CheckboxTargetHealName:SetType("checkbox")
         ShowMeMyHeal.SettingsUI.CheckboxTargetHealName:SetLabel("Target heal name")
-        ShowMeMyHeal.SettingsUI.CheckboxTargetHealName:SetValue(ShowMeMyHealParameters.display.showTargetHealName)    
+        ShowMeMyHeal.SettingsUI.CheckboxTargetHealName:SetValue(self.db.profile.showTargetHealName)    
         container:AddChild(ShowMeMyHeal.SettingsUI.CheckboxTargetHealName)    
 
         ShowMeMyHeal.SettingsUI.CheckboxVampiricEmbrace = AceGUI:Create("CheckBox")
         ShowMeMyHeal.SettingsUI.CheckboxVampiricEmbrace:SetType("checkbox")
         ShowMeMyHeal.SettingsUI.CheckboxVampiricEmbrace:SetLabel("(Priest) Vampiric Embrace")
-        ShowMeMyHeal.SettingsUI.CheckboxVampiricEmbrace:SetValue(ShowMeMyHealParameters.display.showVampiricEmbracePriest)        
+        ShowMeMyHeal.SettingsUI.CheckboxVampiricEmbrace:SetValue(self.db.profile.showVampiricEmbracePriest)        
         container:AddChild(ShowMeMyHeal.SettingsUI.CheckboxVampiricEmbrace)
     end
 
@@ -213,30 +221,36 @@ function ShowMeMyHeal:CreateUI()
         ShowMeMyHeal.SettingsUI.SliderDuration:SetWidth(182)
         ShowMeMyHeal.SettingsUI.SliderDuration:SetHeight(50)
         ShowMeMyHeal.SettingsUI.SliderDuration:SetSliderValues(1, 10, 0.1)
-        ShowMeMyHeal.SettingsUI.SliderDuration:SetValue(ShowMeMyHealParameters.display.animationDuration)
+        ShowMeMyHeal.SettingsUI.SliderDuration:SetValue(self.db.profile.animationDuration)
         container:AddChild(ShowMeMyHeal.SettingsUI.SliderDuration)
 
         ShowMeMyHeal.SettingsUI.SliderScrollLength = AceGUI:Create("Slider")
         ShowMeMyHeal.SettingsUI.SliderScrollLength:SetLabel("Scroll length")
         ShowMeMyHeal.SettingsUI.SliderScrollLength:SetWidth(182)
         ShowMeMyHeal.SettingsUI.SliderScrollLength:SetSliderValues(100, 1000, 1)
-        ShowMeMyHeal.SettingsUI.SliderScrollLength:SetValue(ShowMeMyHealParameters.display.scrollLength)
+        ShowMeMyHeal.SettingsUI.SliderScrollLength:SetValue(self.db.profile.scrollLength)
         container:AddChild(ShowMeMyHeal.SettingsUI.SliderScrollLength)
 
         ShowMeMyHeal.SettingsUI.SliderOffsetX = AceGUI:Create("Slider")
         ShowMeMyHeal.SettingsUI.SliderOffsetX:SetLabel("Offset X")
         ShowMeMyHeal.SettingsUI.SliderOffsetX:SetWidth(182)
         ShowMeMyHeal.SettingsUI.SliderOffsetX:SetSliderValues(-800, 800, 1)
-        ShowMeMyHeal.SettingsUI.SliderOffsetX:SetValue(ShowMeMyHealParameters.display.offsetX)
+        ShowMeMyHeal.SettingsUI.SliderOffsetX:SetValue(self.db.profile.offsetX)
         container:AddChild(ShowMeMyHeal.SettingsUI.SliderOffsetX)
 
         ShowMeMyHeal.SettingsUI.SliderOffsetY = AceGUI:Create("Slider")
         ShowMeMyHeal.SettingsUI.SliderOffsetY:SetLabel("Offset Y")
         ShowMeMyHeal.SettingsUI.SliderOffsetY:SetWidth(182)
         ShowMeMyHeal.SettingsUI.SliderOffsetY:SetSliderValues(-500, 500, 1)
-        ShowMeMyHeal.SettingsUI.SliderOffsetY:SetValue(ShowMeMyHealParameters.display.offsetY)
+        ShowMeMyHeal.SettingsUI.SliderOffsetY:SetValue(self.db.profile.offsetY)
         container:AddChild(ShowMeMyHeal.SettingsUI.SliderOffsetY)
     end
+
+    local function createMinimapIcon()
+        ShowMeMyHeal.SettingsUI.icon = LibStub("LibDBIcon-1.0")
+        ShowMeMyHeal.SettingsUI.icon:Register("ShowMeMyHealIcon", ShowMeMyHealIconDB, self.db.profile.minimap)
+    end
+    
     
     -- Create the frame container
     ShowMeMyHeal.SettingsUI = AceGUI:Create("Frame")
@@ -249,9 +263,7 @@ function ShowMeMyHeal:CreateUI()
 
 
     ShowMeMyHeal.SettingsUI:SetWidth(400)
-    ShowMeMyHeal.SettingsUI:SetHeight(570)
-
-
+    ShowMeMyHeal.SettingsUI:SetHeight(590)
 
     scrollcontainer = AceGUI:Create("SimpleGroup") 
     scrollcontainer:SetFullWidth(true)
@@ -264,15 +276,21 @@ function ShowMeMyHeal:CreateUI()
     scroll:SetLayout("Flow") 
     scrollcontainer:AddChild(scroll)
 
+    CreateMinimapMenu(scroll)
     CreateFontMenu(scroll)
     CreateColorMenu(scroll)
     createShowMenu(scroll)
     createAnimationMenu(scroll)
     CreateButtonMenu(scroll)   
+    createMinimapIcon(scroll)     
 end
 
 function ShowMeMyHeal:BinUI()
 
+
+    ShowMeMyHeal.SettingsUI.checkboxMinimap:SetCallback("OnValueChanged", function(widget, event, value)
+        self.db.profile.minimap.hide = value
+    end)
 
     ShowMeMyHeal.SettingsUI.buttonTest:SetCallback("OnClick", function()
         for i=0, 20, 1 do
@@ -295,93 +313,97 @@ function ShowMeMyHeal:BinUI()
 
         local r, g, b = ShowMeMyHeal:HexToRGBPerc("0FFF00")
         ShowMeMyHeal.SettingsUI.ColorPickerNormalHeal:SetColor(r, g, b, 1)   
-        ShowMeMyHealParameters.display.colorNormal = ShowMeMyHeal:RGBPercToHex(r, g, b)
+        self.db.profile.colorNormal = ShowMeMyHeal:RGBPercToHex(r, g, b)
 
         r, g, b = ShowMeMyHeal:HexToRGBPerc("FF0000")
         ShowMeMyHeal.SettingsUI.ColorPickerCritHeal:SetColor(r, g, b, 1)
-        ShowMeMyHealParameters.display.colorCrit = ShowMeMyHeal:RGBPercToHex(r, g, b)
+        self.db.profile.colorCrit = ShowMeMyHeal:RGBPercToHex(r, g, b)
 
         r, g, b = ShowMeMyHeal:HexToRGBPerc("EDF404")
         ShowMeMyHeal.SettingsUI.ColorPickerExcessHeal:SetColor(r, g, b, 1)
-        ShowMeMyHealParameters.display.colorExcess = ShowMeMyHeal:RGBPercToHex(r, g, b)
+        self.db.profile.colorExcess = ShowMeMyHeal:RGBPercToHex(r, g, b)
 
         r, g, b = ShowMeMyHeal:HexToRGBPerc("FFFFFF")
         ShowMeMyHeal.SettingsUI.ColorPickerName:SetColor(r, g, b, 1)
-        ShowMeMyHealParameters.display.colorName = ShowMeMyHeal:RGBPercToHex(r, g, b)
+        self.db.profile.colorName = ShowMeMyHeal:RGBPercToHex(r, g, b)
 
         ShowMeMyHeal.SettingsUI.SliderNormalHeal:SetValue(30)
-        ShowMeMyHealParameters.display.fontSizeNormalHeal = 30
+        self.db.profile.fontSizeNormalHeal = 30
         ShowMeMyHeal.SettingsUI.SliderCritHeal:SetValue(41)
-        ShowMeMyHealParameters.display.fontSizeCriticalHeal = 41
+        self.db.profile.fontSizeCriticalHeal = 41
 
         ShowMeMyHeal.SettingsUI.CheckboxHOTs:SetValue(true)   
-        ShowMeMyHealParameters.display.showHOTs = true
+        self.db.profile.showHOTs = true
         ShowMeMyHeal.SettingsUI.CheckboxTargetHealName:SetValue(true)  
-        ShowMeMyHealParameters.display.showTargetHealName = true  
+        self.db.profile.showTargetHealName = true  
         ShowMeMyHeal.SettingsUI.CheckboxVampiricEmbrace:SetValue(true) 
-        ShowMeMyHealParameters.display.showVampiricEmbracePriest = true     
+        self.db.profile.showVampiricEmbracePriest = true     
 
         ShowMeMyHeal.SettingsUI.SliderDuration:SetValue(4)
-        ShowMeMyHealParameters.display.animationDuration = 4
-        ShowMeMyHeal.SettingsUI.SliderScrollLength:SetValue(500)
-        ShowMeMyHealParameters.display.scrollLength = 500
+        self.db.profile.animationDuration = 4
+        ShowMeMyHeal.SettingsUI.SliderScrollLength:SetValue(480)
+        self.db.profile.scrollLength = 480
         ShowMeMyHeal.SettingsUI.SliderOffsetX:SetValue(0)
-        ShowMeMyHealParameters.display.offsetX = 0
+        self.db.profile.offsetX = 0
         ShowMeMyHeal.SettingsUI.SliderOffsetY:SetValue(0)
-        ShowMeMyHealParameters.display.offsetY = 0
+        self.db.profile.offsetY = 0
     end)
    
 
     ShowMeMyHeal.SettingsUI.ColorPickerNormalHeal:SetCallback("OnValueConfirmed", function(widget, event, r, g, b, a)
-        ShowMeMyHealParameters.display.colorNormal = ShowMeMyHeal:RGBPercToHex(r, g, b)
+        self.db.profile.colorNormal = ShowMeMyHeal:RGBPercToHex(r, g, b)
     end)
     ShowMeMyHeal.SettingsUI.ColorPickerCritHeal:SetCallback("OnValueConfirmed", function(widget, event, r, g, b, a)
-        ShowMeMyHealParameters.display.colorCrit = ShowMeMyHeal:RGBPercToHex(r, g, b)
+        self.db.profile.colorCrit = ShowMeMyHeal:RGBPercToHex(r, g, b)
     end)
     ShowMeMyHeal.SettingsUI.ColorPickerExcessHeal:SetCallback("OnValueConfirmed", function(widget, event, r, g, b, a)
-        ShowMeMyHealParameters.display.colorExcess = ShowMeMyHeal:RGBPercToHex(r, g, b)
+        self.db.profile.colorExcess = ShowMeMyHeal:RGBPercToHex(r, g, b)
+    end)
+
+    ShowMeMyHeal.SettingsUI.ColorPickerName:SetCallback("OnValueConfirmed", function(widget, event, r, g, b, a)
+        self.db.profile.colorName = ShowMeMyHeal:RGBPercToHex(r, g, b)
     end)
 
     ShowMeMyHeal.SettingsUI.SliderNormalHeal:SetCallback("OnValueChanged", function(widget, event, value)
-        ShowMeMyHealParameters.display.fontSizeNormalHeal = value
+        self.db.profile.fontSizeNormalHeal = value
     end)
     ShowMeMyHeal.SettingsUI.SliderCritHeal:SetCallback("OnValueChanged", function(widget, event, value)
-        ShowMeMyHealParameters.display.fontSizeCriticalHeal = value
+        self.db.profile.fontSizeCriticalHeal = value
     end)
 
     ShowMeMyHeal.SettingsUI.CheckboxHOTs:SetCallback("OnValueChanged", function(widget, event, value)
-        ShowMeMyHealParameters.display.showHOTs = value 
+        self.db.profile.showHOTs = value 
     end)
     ShowMeMyHeal.SettingsUI.CheckboxTargetHealName:SetCallback("OnValueChanged", function(widget, event, value)
-        ShowMeMyHealParameters.display.showTargetHealName = value
+        self.db.profile.showTargetHealName = value
     end)
     ShowMeMyHeal.SettingsUI.CheckboxVampiricEmbrace:SetCallback("OnValueChanged", function(widget, event, value)
-        ShowMeMyHealParameters.display.showVampiricEmbracePriest = value
+        self.db.profile.showVampiricEmbracePriest = value
     end)
 
     ShowMeMyHeal.SettingsUI.SliderDuration:SetCallback("OnValueChanged", function(widget, event, value)
-        ShowMeMyHealParameters.display.animationDuration = value
+        self.db.profile.animationDuration = value
     end)
     ShowMeMyHeal.SettingsUI.SliderScrollLength:SetCallback("OnValueChanged", function(widget, event, value)
-        ShowMeMyHealParameters.display.scrollLength = value
+        self.db.profile.scrollLength = value
     end)
     ShowMeMyHeal.SettingsUI.SliderOffsetX:SetCallback("OnValueChanged", function(widget, event, value)
-        ShowMeMyHealParameters.display.offsetX = value
+        self.db.profile.offsetX = value
     end)
     ShowMeMyHeal.SettingsUI.SliderOffsetY:SetCallback("OnValueChanged", function(widget, event, value)
-        ShowMeMyHealParameters.display.offsetY = value
+        self.db.profile.offsetY = value
     end)
 
 end
 
-function ShowMeMyHeal_eventHandler(self, event, arg1)
+function ShowMeMyHeal:COMBAT_LOG_EVENT_UNFILTERED(self, event, arg1)
 
     local time, token, hidding, who_serial, who_name, who_flags, who_flags2, target_serial, target_name, target_flags, target_flags2, A1, spellName, A3, heal, excess, A6, isCrit, A8, A9, A10, A11, A12 = CombatLogGetCurrentEventInfo()
     if ShowMeMyHeal.myGUID  == who_serial then
         
         if token == "SPELL_HEAL" or token == "SPELL_PERIODIC_HEAL" then
 
-            if token == "SPELL_PERIODIC_HEAL" and ShowMeMyHealParameters.display.showHOTs == false then
+            if token == "SPELL_PERIODIC_HEAL" and self.db.profile.showHOTs == false then
                 return
             end
 
@@ -393,7 +415,7 @@ function ShowMeMyHeal_eventHandler(self, event, arg1)
                 spellName == "Abraço Vampírico" or 
                 spellName == "Объятия вампира" or 
                 spellName == "흡혈의 선물" or 
-                spellName == "吸血鬼的拥抱") and ShowMeMyHealParameters.display.showVampiricEmbracePriest == false then
+                spellName == "吸血鬼的拥抱") and self.db.profile.showVampiricEmbracePriest == false then
                 return
             end             
 
@@ -407,26 +429,19 @@ function ShowMeMyHeal_eventHandler(self, event, arg1)
     end   
 end
 
-function ShowMeMyHeal_Upload()
-    if ShowMeMyHeal.texts[1] ~= nil then
-        ShowMeMyHeal:DisplayText(ShowMeMyHeal.texts[1].text, ShowMeMyHeal.texts[1].isCrit)
-        table.remove(ShowMeMyHeal.texts, 1)
-    end
-end
-
 function ShowMeMyHeal:DisplayText(text, isCrit)
     local frame = CreateFrame("Frame", "FloatingText", UIParent)
     
-    frame:SetPoint("CENTER", ShowMeMyHealParameters.display.offsetX, ShowMeMyHealParameters.display.offsetY)
+    frame:SetPoint("CENTER", self.db.profile.offsetX, self.db.profile.offsetY)
     frame:SetSize(1, 1)
 
     frame.text = frame:CreateFontString(nil, "OVERLAY", nil)
     frame.text:SetPoint("CENTER")
 
     if isCrit then 
-        frame.text:SetFont(STANDARD_TEXT_FONT, ShowMeMyHealParameters.display.fontSizeCriticalHeal, "OUTLINE")
+        frame.text:SetFont(STANDARD_TEXT_FONT, self.db.profile.fontSizeCriticalHeal, "OUTLINE")
     else
-        frame.text:SetFont(STANDARD_TEXT_FONT, ShowMeMyHealParameters.display.fontSizeNormalHeal, "OUTLINE")
+        frame.text:SetFont(STANDARD_TEXT_FONT, self.db.profile.fontSizeNormalHeal, "OUTLINE")
     end
 
     frame.text:SetText(text)
@@ -434,8 +449,8 @@ function ShowMeMyHeal:DisplayText(text, isCrit)
     local ag = frame:CreateAnimationGroup()    
     local a1 = ag:CreateAnimation("Translation")
 
-    a1:SetOffset(0, ShowMeMyHealParameters.display.scrollLength)    
-    a1:SetDuration(ShowMeMyHealParameters.display.animationDuration)
+    a1:SetOffset(0, self.db.profile.scrollLength)    
+    a1:SetDuration(self.db.profile.animationDuration)
     a1:SetSmoothing("OUT")
     ag:SetScript("OnFinished", function() frame:Hide() frame:SetParent(nil) end)
 
@@ -447,13 +462,13 @@ function ShowMeMyHeal:BuildText(textInfo, heal, excess, target)
     heal = heal - excess
 
     if textInfo.isCrit == false then
-        textInfo.text = "|cFF"..ShowMeMyHealParameters.display.colorNormal.."+"..heal.."|r |cFF"..ShowMeMyHealParameters.display.colorExcess.."("..excess..")|r"
+        textInfo.text = "|cFF"..self.db.profile.colorNormal.."+"..heal.."|r |cFF"..self.db.profile.colorExcess.."("..excess..")|r"
     else
-        textInfo.text = "|cFF"..ShowMeMyHealParameters.display.colorCrit.."+"..heal.."|r |cFF"..ShowMeMyHealParameters.display.colorExcess.."("..excess..")|r"
+        textInfo.text = "|cFF"..self.db.profile.colorCrit.."+"..heal.."|r |cFF"..self.db.profile.colorExcess.."("..excess..")|r"
     end
 
-    if ShowMeMyHealParameters.display.showTargetHealName == true then
-        textInfo.text = textInfo.text.."|cFF"..ShowMeMyHealParameters.display.colorName.." - ["..target.."]|r"
+    if self.db.profile.showTargetHealName == true then
+        textInfo.text = textInfo.text.."|cFF"..self.db.profile.colorName.." - ["..target.."]|r"
     end
 
 end
