@@ -1,0 +1,10 @@
+## Interface: 11302
+## Title: ShowMeMyHeal v0.4.0
+## Author: Saveme
+## Version: 0.4.0
+## SavedVariables: ShowMeMyHealDB
+## OptionalDeps: Ace3
+## X-Embeds: Ace3
+
+embeds.xml
+Core.lua
