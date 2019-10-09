@@ -288,7 +288,7 @@ function ShowMeMyHeal:CreateUI()
     ShowMeMyHeal.SettingsUI = AceGUI:Create("Frame")
     ShowMeMyHeal.SettingsUI:Hide()
     ShowMeMyHeal.SettingsUI:SetTitle("ShowMeMyHeal")
-    ShowMeMyHeal.SettingsUI:SetStatusText("Version 0.4.2 by Saveme (Perceval)")
+    ShowMeMyHeal.SettingsUI:SetStatusText("Version 0.5.0 by Saveme (Perceval)")
 
     ShowMeMyHeal.SettingsUI:SetLayout("Flow")
     ShowMeMyHeal.SettingsUI:EnableResize(false)
@@ -554,7 +554,7 @@ function ShowMeMyHeal:BuildText(textInfo, heal, excess, target, who)
     end
 
     if self.db.profile.showOverheal == true then
-        textInfo.text = textInfo.text.."|cFF"..self.db.profile.colorExcess.."("..excess..")|r"
+        textInfo.text = textInfo.text.."|cFF"..self.db.profile.colorExcess.." ("..excess..")|r"
     end
 
     if self.db.profile.showTargetHealName == true then
