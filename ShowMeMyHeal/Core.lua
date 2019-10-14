@@ -505,7 +505,7 @@ function ShowMeMyHeal:COMBAT_LOG_EVENT_UNFILTERED(event)
             end
 
   
-            if self.db.profile.showSelfHeal == false and ShowMeMyHeal.myGUID  == who_serial then
+            if self.db.profile.showSelfHeal == false and ShowMeMyHeal.myGUID  == target_serial then
                 return
             end
 
