@@ -300,7 +300,7 @@ function ShowMeMyHeal:CreateUI()
     ShowMeMyHeal.SettingsUI = AceGUI:Create("Frame")
     ShowMeMyHeal.SettingsUI:Hide()
     ShowMeMyHeal.SettingsUI:SetTitle("ShowMeMyHeal")
-    ShowMeMyHeal.SettingsUI:SetStatusText("Version 0.5.0 by Saveme (Perceval)")
+    ShowMeMyHeal.SettingsUI:SetStatusText("Version 0.6.0 by Saveme (Perceval)")
 
     ShowMeMyHeal.SettingsUI:SetLayout("Flow")
     ShowMeMyHeal.SettingsUI:EnableResize(false)
