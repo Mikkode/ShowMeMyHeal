@@ -19,6 +19,7 @@ local defaults = {
         showVampiricEmbracePriest = true,
         showAllPLayersWhoAreHealing = false,
         showOverheal = true,
+        overhealShowThreshold = 0,
         showZeroHeal = true,
         showSelfHeal = true,
         colorCrit = "FF0000",
@@ -218,12 +219,23 @@ function ShowMeMyHeal:CreateUI()
         ShowMeMyHeal.SettingsUI.CheckboxShowAllPLayersWhoAreHealing:SetValue(self.db.profile.showAllPLayersWhoAreHealing)        
         container:AddChild(ShowMeMyHeal.SettingsUI.CheckboxShowAllPLayersWhoAreHealing)
 
+        local overhealGroup = AceGUI:Create("SimpleGroup")
+        overhealGroup:SetWidth(320)
+        overhealGroup:SetLayout("Flow")
+        container:AddChild(overhealGroup)
+
         ShowMeMyHeal.SettingsUI.CheckboxOverheal = AceGUI:Create("CheckBox")
         ShowMeMyHeal.SettingsUI.CheckboxOverheal:SetType("checkbox")
-        ShowMeMyHeal.SettingsUI.CheckboxOverheal:SetLabel("Overheal")
-        ShowMeMyHeal.SettingsUI.CheckboxOverheal:SetWidth(320)
+        ShowMeMyHeal.SettingsUI.CheckboxOverheal:SetLabel("Overheal, when over:")
+        ShowMeMyHeal.SettingsUI.CheckboxOverheal:SetWidth(160)
         ShowMeMyHeal.SettingsUI.CheckboxOverheal:SetValue(self.db.profile.showOverheal)        
-        container:AddChild(ShowMeMyHeal.SettingsUI.CheckboxOverheal)
+        overhealGroup:AddChild(ShowMeMyHeal.SettingsUI.CheckboxOverheal)
+
+        ShowMeMyHeal.SettingsUI.EditboxOverheal = AceGUI:Create("EditBox")
+        ShowMeMyHeal.SettingsUI.EditboxOverheal:DisableButton(true)
+        ShowMeMyHeal.SettingsUI.EditboxOverheal:SetWidth(40)
+        ShowMeMyHeal.SettingsUI.EditboxOverheal:SetText(self.db.profile.overhealShowThreshold)
+        overhealGroup:AddChild(ShowMeMyHeal.SettingsUI.EditboxOverheal)
 
         ShowMeMyHeal.SettingsUI.CheckboxZeroHeal = AceGUI:Create("CheckBox")
         ShowMeMyHeal.SettingsUI.CheckboxZeroHeal:SetType("checkbox")
@@ -387,6 +399,9 @@ function ShowMeMyHeal:BinUI()
         ShowMeMyHeal.SettingsUI.CheckboxOverheal:SetValue(true) 
         self.db.profile.showOverheal = true
 
+        ShowMeMyHeal.SettingsUI.EditboxOverheal:SetText("0")
+        self.db.profile.overhealShowThreshold = 0
+
         ShowMeMyHeal.SettingsUI.CheckboxZeroHeal:SetValue(true) 
         self.db.profile.showZeroHeal = true
 
@@ -443,6 +458,14 @@ function ShowMeMyHeal:BinUI()
     ShowMeMyHeal.SettingsUI.CheckboxOverheal:SetCallback("OnValueChanged", function(widget, event, value)
         self.db.profile.showOverheal = value
     end)
+    ShowMeMyHeal.SettingsUI.EditboxOverheal:SetCallback("OnTextChanged", function(widget, event, value)
+        number = tonumber(value)
+        if not number then
+            ShowMeMyHeal.SettingsUI.EditboxOverheal:SetText(self.db.profile.overhealShowThreshold)
+            return
+        end
+        self.db.profile.overhealShowThreshold = number
+    end)
     ShowMeMyHeal.SettingsUI.CheckboxZeroHeal:SetCallback("OnValueChanged", function(widget, event, value)
         self.db.profile.showZeroHeal = value
     end)
@@ -482,7 +505,7 @@ function ShowMeMyHeal:COMBAT_LOG_EVENT_UNFILTERED(event)
             end
 
   
-            if self.db.profile.showSelfHeal == false and ShowMeMyHeal.myGUID  == who_serial then
+            if self.db.profile.showSelfHeal == false and ShowMeMyHeal.myGUID  == target_serial then
                 return
             end
 
@@ -553,7 +576,7 @@ function ShowMeMyHeal:BuildText(textInfo, heal, excess, target, who)
         textInfo.text = textInfo.text.."|cFF"..self.db.profile.colorCrit.."+"..heal.."|r"
     end
 
-    if self.db.profile.showOverheal == true then
+    if self.db.profile.showOverheal == true and excess > self.db.profile.overhealShowThreshold then
         textInfo.text = textInfo.text.."|cFF"..self.db.profile.colorExcess.." ("..excess..")|r"
     end
 
