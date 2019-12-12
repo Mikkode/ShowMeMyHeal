@@ -1,7 +1,7 @@
-## Interface: 11302
-## Title: ShowMeMyHeal v0.6.0
+## Interface: 11303
+## Title: ShowMeMyHeal v0.6.1
 ## Author: Saveme
-## Version: 0.6.0
+## Version: 0.6.1
 ## SavedVariables: ShowMeMyHealDB
 ## OptionalDeps: Ace3
 ## X-Embeds: Ace3
