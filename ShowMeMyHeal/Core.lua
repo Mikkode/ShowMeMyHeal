@@ -300,7 +300,7 @@ function ShowMeMyHeal:CreateUI()
     ShowMeMyHeal.SettingsUI = AceGUI:Create("Frame")
     ShowMeMyHeal.SettingsUI:Hide()
     ShowMeMyHeal.SettingsUI:SetTitle("ShowMeMyHeal")
-    ShowMeMyHeal.SettingsUI:SetStatusText("Version 0.6.0 by Saveme (Perceval)")
+    ShowMeMyHeal.SettingsUI:SetStatusText("Version 0.6.1 by Saveme (Perceval)")
 
     ShowMeMyHeal.SettingsUI:SetLayout("Flow")
     ShowMeMyHeal.SettingsUI:EnableResize(false)
@@ -490,10 +490,12 @@ end
 
 function ShowMeMyHeal:COMBAT_LOG_EVENT_UNFILTERED(event)
 
-    local time, token, hidding, who_serial, who_name, who_flags, who_flags2, target_serial, target_name, target_flags, target_flags2, A1, spellName, A3, heal, excess, A6, isCrit, A8, A9, A10, A11, A12 = CombatLogGetCurrentEventInfo()
+    local time, token, hidding, who_serial, who_name, who_flags, who_flags2, target_serial, target_name, target_flags, target_flags2, A1, spellName, spellSchool, heal, excess, absorbed, isCrit, A8, A9, A10, A11, A12 = CombatLogGetCurrentEventInfo()
     if token == "SPELL_HEAL" or token == "SPELL_PERIODIC_HEAL" then
 
         if ShowMeMyHeal.myGUID  == who_serial or self.db.profile.showAllPLayersWhoAreHealing == true then
+           
+            --a = string.format("%s %q", "Hello", "Lua user!")
 
             if token == "SPELL_PERIODIC_HEAL" and self.db.profile.showHOTs == false then
                 return
