@@ -14,6 +14,11 @@ local defaults = {
         scrollLength = 480,
         offsetX = 0,
         offsetY = 0,
+        animationDurationMe = 4,
+        scrollLengthMe = 480,
+        offsetXMe = -550,
+        offsetYMe = 0,
+        enableAnimationMe = false,
         showHOTs = true,
         showTargetHealName = true,
         showVampiricEmbracePriest = true,
@@ -56,7 +61,7 @@ end
 
 function ShowMeMyHeal_Upload()
     if ShowMeMyHeal.texts[1] ~= nil then
-        ShowMeMyHeal:DisplayText(ShowMeMyHeal.texts[1].text, ShowMeMyHeal.texts[1].isCrit)
+        ShowMeMyHeal:DisplayText(ShowMeMyHeal.texts[1].text, ShowMeMyHeal.texts[1].isCrit, ShowMeMyHeal.texts[1].isMe)
         table.remove(ShowMeMyHeal.texts, 1)
     end
 end
@@ -214,7 +219,7 @@ function ShowMeMyHeal:CreateUI()
 
         ShowMeMyHeal.SettingsUI.CheckboxShowAllPLayersWhoAreHealing = AceGUI:Create("CheckBox")
         ShowMeMyHeal.SettingsUI.CheckboxShowAllPLayersWhoAreHealing:SetType("checkbox")
-        ShowMeMyHeal.SettingsUI.CheckboxShowAllPLayersWhoAreHealing:SetLabel("Show me all heals of all healers (NPC included)")
+        ShowMeMyHeal.SettingsUI.CheckboxShowAllPLayersWhoAreHealing:SetLabel("Show me all heals of all healers")
         ShowMeMyHeal.SettingsUI.CheckboxShowAllPLayersWhoAreHealing:SetWidth(320)
         ShowMeMyHeal.SettingsUI.CheckboxShowAllPLayersWhoAreHealing:SetValue(self.db.profile.showAllPLayersWhoAreHealing)
         container:AddChild(ShowMeMyHeal.SettingsUI.CheckboxShowAllPLayersWhoAreHealing)
@@ -290,6 +295,51 @@ function ShowMeMyHeal:CreateUI()
         container:AddChild(ShowMeMyHeal.SettingsUI.SliderOffsetY)
     end
 
+    local function createAnimationMenuMe(container)
+
+        local header = AceGUI:Create("Heading")
+        header:SetText("Position / Animation for my heals")
+        header:SetFullWidth(true)
+        header:SetHeight(40)
+        container:AddChild(header)
+
+        ShowMeMyHeal.SettingsUI.CheckboxEnableAnimationMe = AceGUI:Create("CheckBox")
+        ShowMeMyHeal.SettingsUI.CheckboxEnableAnimationMe:SetType("checkbox")
+        ShowMeMyHeal.SettingsUI.CheckboxEnableAnimationMe:SetLabel("Enable")
+        ShowMeMyHeal.SettingsUI.CheckboxEnableAnimationMe:SetWidth(300)
+        ShowMeMyHeal.SettingsUI.CheckboxEnableAnimationMe:SetValue(self.db.profile.enableAnimationMe)
+        container:AddChild(ShowMeMyHeal.SettingsUI.CheckboxEnableAnimationMe)
+
+        ShowMeMyHeal.SettingsUI.SliderDurationMe = AceGUI:Create("Slider")
+        ShowMeMyHeal.SettingsUI.SliderDurationMe:SetLabel("Duration")
+        ShowMeMyHeal.SettingsUI.SliderDurationMe:SetWidth(182)
+        ShowMeMyHeal.SettingsUI.SliderDurationMe:SetHeight(50)
+        ShowMeMyHeal.SettingsUI.SliderDurationMe:SetSliderValues(1, 10, 0.1)
+        ShowMeMyHeal.SettingsUI.SliderDurationMe:SetValue(self.db.profile.animationDurationMe)
+        container:AddChild(ShowMeMyHeal.SettingsUI.SliderDurationMe)
+
+        ShowMeMyHeal.SettingsUI.SliderScrollLengthMe = AceGUI:Create("Slider")
+        ShowMeMyHeal.SettingsUI.SliderScrollLengthMe:SetLabel("Scroll length")
+        ShowMeMyHeal.SettingsUI.SliderScrollLengthMe:SetWidth(182)
+        ShowMeMyHeal.SettingsUI.SliderScrollLengthMe:SetSliderValues(100, 1000, 1)
+        ShowMeMyHeal.SettingsUI.SliderScrollLengthMe:SetValue(self.db.profile.scrollLengthMe)
+        container:AddChild(ShowMeMyHeal.SettingsUI.SliderScrollLengthMe)
+
+        ShowMeMyHeal.SettingsUI.SliderOffsetXMe = AceGUI:Create("Slider")
+        ShowMeMyHeal.SettingsUI.SliderOffsetXMe:SetLabel("Offset X")
+        ShowMeMyHeal.SettingsUI.SliderOffsetXMe:SetWidth(182)
+        ShowMeMyHeal.SettingsUI.SliderOffsetXMe:SetSliderValues(-800, 800, 1)
+        ShowMeMyHeal.SettingsUI.SliderOffsetXMe:SetValue(self.db.profile.offsetXMe)
+        container:AddChild(ShowMeMyHeal.SettingsUI.SliderOffsetXMe)
+
+        ShowMeMyHeal.SettingsUI.SliderOffsetYMe = AceGUI:Create("Slider")
+        ShowMeMyHeal.SettingsUI.SliderOffsetYMe:SetLabel("Offset Y")
+        ShowMeMyHeal.SettingsUI.SliderOffsetYMe:SetWidth(182)
+        ShowMeMyHeal.SettingsUI.SliderOffsetYMe:SetSliderValues(-500, 500, 1)
+        ShowMeMyHeal.SettingsUI.SliderOffsetYMe:SetValue(self.db.profile.offsetYMe)
+        container:AddChild(ShowMeMyHeal.SettingsUI.SliderOffsetYMe)
+    end
+
     local function createMinimapIcon()
         ShowMeMyHeal.SettingsUI.icon = LibStub("LibDBIcon-1.0")
         ShowMeMyHeal.SettingsUI.icon:Register("ShowMeMyHealIcon", ShowMeMyHealIconDB, self.db.profile.minimap)
@@ -300,14 +350,14 @@ function ShowMeMyHeal:CreateUI()
     ShowMeMyHeal.SettingsUI = AceGUI:Create("Frame")
     ShowMeMyHeal.SettingsUI:Hide()
     ShowMeMyHeal.SettingsUI:SetTitle("ShowMeMyHeal")
-    ShowMeMyHeal.SettingsUI:SetStatusText("Version 0.7.0 by Saveme (Perceval)")
+    ShowMeMyHeal.SettingsUI:SetStatusText("Version 1.0.0 by Saveme (Perceval)")
 
     ShowMeMyHeal.SettingsUI:SetLayout("Flow")
     ShowMeMyHeal.SettingsUI:EnableResize(false)
 
 
     ShowMeMyHeal.SettingsUI:SetWidth(400)
-    ShowMeMyHeal.SettingsUI:SetHeight(710)
+    ShowMeMyHeal.SettingsUI:SetHeight(880)
 
     scrollcontainer = AceGUI:Create("SimpleGroup")
     scrollcontainer:SetFullWidth(true)
@@ -325,6 +375,7 @@ function ShowMeMyHeal:CreateUI()
     CreateColorMenu(scroll)
     createShowMenu(scroll)
     createAnimationMenu(scroll)
+    createAnimationMenuMe(scroll)
     CreateButtonMenu(scroll)
     createMinimapIcon(scroll)
 end
@@ -345,11 +396,18 @@ function ShowMeMyHeal:BinUI()
         for i=0, 20, 1 do
             local textInfo = {}
             textInfo.isCrit = math.random(0, 1)
+            textInfo.isMe = math.random(0, 1)
 
             if textInfo.isCrit == 0 then
                 textInfo.isCrit = false
             else
                 textInfo.isCrit = true
+            end
+
+            if textInfo.isMe == 0 then
+                textInfo.isMe = false
+            else
+                textInfo.isMe = true
             end
 
             ShowMeMyHeal:BuildText(textInfo, math.random(50, 1500), math.random(50, 1500), "TestNameTarget", "TestNameFrom")
@@ -486,6 +544,24 @@ function ShowMeMyHeal:BinUI()
         self.db.profile.offsetY = value
     end)
 
+
+    ShowMeMyHeal.SettingsUI.CheckboxEnableAnimationMe:SetCallback("OnValueChanged", function(widget, event, value)
+        self.db.profile.enableAnimationMe = value
+    end)
+    ShowMeMyHeal.SettingsUI.SliderDurationMe:SetCallback("OnValueChanged", function(widget, event, value)
+        self.db.profile.animationDurationMe = value
+    end)
+    ShowMeMyHeal.SettingsUI.SliderScrollLengthMe:SetCallback("OnValueChanged", function(widget, event, value)
+        self.db.profile.scrollLengthMe = value
+    end)
+    ShowMeMyHeal.SettingsUI.SliderOffsetXMe:SetCallback("OnValueChanged", function(widget, event, value)
+        self.db.profile.offsetXMe = value
+    end)
+    ShowMeMyHeal.SettingsUI.SliderOffsetYMe:SetCallback("OnValueChanged", function(widget, event, value)
+        self.db.profile.offsetYMe = value
+    end)
+
+
 end
 
 function ShowMeMyHeal:COMBAT_LOG_EVENT_UNFILTERED(event)
@@ -493,9 +569,12 @@ function ShowMeMyHeal:COMBAT_LOG_EVENT_UNFILTERED(event)
     local time, token, hidding, who_serial, who_name, who_flags, who_flags2, target_serial, target_name, target_flags, target_flags2, A1, spellName, spellSchool, heal, excess, absorbed, isCrit, A8, A9, A10, A11, A12 = CombatLogGetCurrentEventInfo()
     if token == "SPELL_HEAL" or token == "SPELL_PERIODIC_HEAL" then
 
+        if string.find(who_serial, "Player") == nil then
+            return
+        end
+
         if ShowMeMyHeal.myGUID  == who_serial or self.db.profile.showAllPLayersWhoAreHealing == true then
 
-            --a = string.format("%s %q", "Hello", "Lua user!")
 
             if token == "SPELL_PERIODIC_HEAL" and self.db.profile.showHOTs == false then
                 return
@@ -527,6 +606,12 @@ function ShowMeMyHeal:COMBAT_LOG_EVENT_UNFILTERED(event)
             local textInfo = {}
             textInfo.isCrit = isCrit
 
+            if ShowMeMyHeal.myGUID == who_serial then
+                textInfo.isMe = true
+            else
+                textInfo.isMe = false
+            end
+
             ShowMeMyHeal:BuildText(textInfo, heal, excess, target_name, who_name)
 
             table.insert(ShowMeMyHeal.texts, textInfo)
@@ -534,10 +619,27 @@ function ShowMeMyHeal:COMBAT_LOG_EVENT_UNFILTERED(event)
     end
 end
 
-function ShowMeMyHeal:DisplayText(text, isCrit)
+function ShowMeMyHeal:DisplayText(text, isCrit, isMe)
     local frame = CreateFrame("Frame", "FloatingText", UIParent)
 
-    frame:SetPoint("CENTER", self.db.profile.offsetX, self.db.profile.offsetY)
+    local offsetX = self.db.profile.offsetX
+    local offsetY = self.db.profile.offsetY
+    local duration = self.db.profile.animationDuration
+    local scrollLength = self.db.profile.scrollLength
+
+    if isMe then
+
+        if self.db.profile.enableAnimationMe then 
+            offsetX = self.db.profile.offsetXMe  
+            offsetY = self.db.profile.offsetYMe   
+            duration = self.db.profile.animationDurationMe
+            scrollLength = self.db.profile.scrollLengthMe
+        end        
+    end
+
+
+    frame:SetPoint("CENTER", offsetX, offsetY)
+    
     frame:SetSize(1, 1)
 
     frame.text = frame:CreateFontString(nil, "OVERLAY", nil)
@@ -554,8 +656,8 @@ function ShowMeMyHeal:DisplayText(text, isCrit)
     local ag = frame:CreateAnimationGroup()
     local a1 = ag:CreateAnimation("Translation")
 
-    a1:SetOffset(0, self.db.profile.scrollLength)
-    a1:SetDuration(self.db.profile.animationDuration)
+    a1:SetOffset(0, scrollLength)
+    a1:SetDuration(duration)
     a1:SetSmoothing("OUT")
     ag:SetScript("OnFinished", function() frame:Hide() frame:SetParent(nil) end)
 
@@ -568,7 +670,7 @@ function ShowMeMyHeal:BuildText(textInfo, heal, excess, target, who)
 
     textInfo.text = ""
 
-    if self.db.profile.showAllPLayersWhoAreHealing == true then
+    if self.db.profile.showAllPLayersWhoAreHealing == true and textInfo.isMe == false then
         textInfo.text = "|cFF"..self.db.profile.colorName.."["..who.."] -> |r"
     end
 
